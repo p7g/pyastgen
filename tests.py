@@ -235,7 +235,6 @@ class TestBuilderStatements(unittest.TestCase):
         for method, expected in augmented_methods:
             builder = Builder([])
             var = builder.declare("x")
-            var.value = constant(5)
             getattr(builder, method)(var.target, constant(3))
             self.assertEqual(unparse(builder.block[0]), expected)
 
@@ -304,8 +303,8 @@ class TestBuilderStatements(unittest.TestCase):
         )
         (x, y, z, args, q, kwargs), func_builder = builder.new_function(var, params)
         result_var = func_builder.declare("result")
-        result_var.store(func_builder, x.value.add(y.value).add(z.value).add(q.value))
-        func_builder.return_(result_var.value)
+        result_var.store(func_builder, x.add(y).add(z).add(q))
+        func_builder.return_(result_var)
         self.assertEqual(len(builder.block), 1)
         func_node = builder.block[0]
         self.assertEqual(
@@ -319,7 +318,7 @@ class TestBuilderStatements(unittest.TestCase):
         builder = Builder([])
         var = builder.declare("MyClass")
         base = builder.declare("object", exact=True)
-        class_builder = builder.new_class(var, base.value)
+        class_builder = builder.new_class(var, base)
         class_var = class_builder.declare("x")
         class_var.store(class_builder, constant(5))
         self.assertEqual(len(builder.block), 1)
@@ -378,7 +377,7 @@ class TestBuilderStatements(unittest.TestCase):
         builder = Builder([])
         comp = builder.comprehension()
         x = comp.for_("x", constant([1, 2, 3]))
-        list_comp = comp.list(x.value)
+        list_comp = comp.list(x)
         builder.expr(list_comp)
         self.assertEqual(len(builder.block), 1)
         comp_node = builder.block[0]
@@ -388,8 +387,8 @@ class TestBuilderStatements(unittest.TestCase):
         builder = Builder([])
         comp = builder.comprehension()
         x = comp.for_("x", constant([1, 2, 3]))
-        comp.if_(x.value.gt(constant(1)))
-        list_comp = comp.list(x.value)
+        comp.if_(x.gt(constant(1)))
+        list_comp = comp.list(x)
         builder.expr(list_comp)
         self.assertEqual(len(builder.block), 1)
         comp_node = builder.block[0]
@@ -399,9 +398,9 @@ class TestBuilderStatements(unittest.TestCase):
         builder = Builder([])
         comp = builder.comprehension()
         x = comp.for_("x", constant([1, 2, 3]))
-        comp.if_(x.value.gt(constant(1)))
-        comp.if_(x.value.mod(constant(2)).eq(constant(0)))
-        list_comp = comp.list(x.value)
+        comp.if_(x.gt(constant(1)))
+        comp.if_(x.mod(constant(2)).eq(constant(0)))
+        list_comp = comp.list(x)
         builder.expr(list_comp)
         self.assertEqual(len(builder.block), 1)
         comp_node = builder.block[0]
@@ -413,10 +412,10 @@ class TestBuilderStatements(unittest.TestCase):
         module, builder = new_module()
         comp = builder.comprehension()
         x = comp.for_("x", constant([1, 2, 3]))
-        builder.expr(comp.list(x.value))
-        builder.expr(comp.generator(x.value))
-        builder.expr(comp.set(x.value))
-        builder.expr(comp.dict(x.value, x.value))
+        builder.expr(comp.list(x))
+        builder.expr(comp.generator(x))
+        builder.expr(comp.set(x))
+        builder.expr(comp.dict(x, x))
         self.assertEqual(
             unparse(module),
             "[x for x in [1, 2, 3]]\n"
@@ -429,7 +428,7 @@ class TestBuilderStatements(unittest.TestCase):
         builder = Builder([])
         comp = builder.comprehension()
         x = comp.for_("x", constant([1, 2, 3]), is_async=True)
-        list_comp = comp.list(x.value)
+        list_comp = comp.list(x)
         builder.expr(list_comp)
         self.assertEqual(len(builder.block), 1)
         comp_node = builder.block[0]
@@ -451,7 +450,7 @@ class TestBuilderStatements(unittest.TestCase):
 
     def test_expr_statement(self):
         builder = Builder([])
-        exception_value = builder.declare("Exception", exact=True).value.call(
+        exception_value = builder.declare("Exception", exact=True).call(
             constant("error")
         )
         builder.raise_(exception_value)
@@ -641,11 +640,11 @@ class TestPerformanceAndScalability(unittest.TestCase):
 
         comp = func_builder.comprehension()
         y = comp.for_("y", constant([1, 2, 3]))
-        list_comp = comp.list(y.value.add(x.value))
+        list_comp = comp.list(y.add(x))
 
         result = func_builder.declare("result")
         result.store(func_builder, list_comp)
-        func_builder.return_(result.value)
+        func_builder.return_(result)
 
         # Check that the AST is correctly generated
         self.assertEqual(len(builder.block), 1)
@@ -672,11 +671,11 @@ class TestPerformanceAndScalability(unittest.TestCase):
         inner_builder.nonlocal_(outer_var)
         outer_var.store(inner_builder, constant(333))
 
-        outer_builder.expr(inner.value.call())
-        outer_builder.assert_(outer_var.value.eq(constant(333)))
+        outer_builder.expr(inner.call())
+        outer_builder.assert_(outer_var.eq(constant(333)))
 
-        builder.expr(outer.value.call())
-        builder.assert_(global_var.value.eq(constant(222)))
+        builder.expr(outer.call())
+        builder.assert_(global_var.eq(constant(222)))
 
         ast.fix_missing_locations(module)
         code = compile(module, "<script>", "exec", dont_inherit=True, optimize=0)
@@ -689,7 +688,7 @@ class TestWithBlockCodeGeneration(unittest.TestCase):
 
     def test_simple_with_block(self):
         # Create the with block
-        value = self.builder.declare("context_manager").value
+        value = self.builder.declare("context_manager")
         _, body_builder = self.builder.with_((value, None), is_async=False)
 
         # Add an empty body
@@ -707,15 +706,15 @@ class TestWithBlockCodeGeneration(unittest.TestCase):
         self.assertEqual(generated_code.strip(), expected_code.strip())
 
     def test_with_variable_assignment(self):
-        value = self.builder.declare("context_manager").value
+        value = self.builder.declare("context_manager")
 
         # Create the with block, assigning to 'ctx'
         var, body_builder = self.builder.with1(value, "ctx", is_async=False)
 
         # Inside the with block: use 'ctx'
         body_builder.expr(
-            body_builder.declare("print", exact=True).value.call(
-                var.value.add(constant(" inside"))
+            body_builder.declare("print", exact=True).call(
+                var.add(constant(" inside"))
             )
         )
 
@@ -731,16 +730,16 @@ class TestWithBlockCodeGeneration(unittest.TestCase):
         self.assertEqual(generated_code.strip(), expected_code.strip())
 
     def test_multiple_context_managers(self):
-        cm1 = self.builder.declare("context_manager1").value
-        cm2 = self.builder.declare("context_manager2").value
+        cm1 = self.builder.declare("context_manager1")
+        cm2 = self.builder.declare("context_manager2")
 
         # Create the with block, assigning both managers
         (var1, var2), body_builder = self.builder.with_((cm1, "ctx1"), (cm2, "ctx2"))
 
         # Inside the with block: use both ctx1 and ctx2
         body_builder.expr(
-            body_builder.declare("print", exact=True).value.call(
-                var1.value.add(constant(" and ")).add(var2.value)
+            body_builder.declare("print", exact=True).call(
+                var1.add(constant(" and ")).add(var2)
             )
         )
 
@@ -756,14 +755,14 @@ class TestWithBlockCodeGeneration(unittest.TestCase):
         self.assertEqual(generated_code.strip(), expected_code.strip())
 
     def test_async_with_block(self):
-        value = self.builder.declare("async_context_manager").value
+        value = self.builder.declare("async_context_manager")
 
         # Create the async with block
         _var, body_builder = self.builder.with_((value, None), is_async=True)
 
         # Inside the with block: print a message
         body_builder.expr(
-            body_builder.declare("print", exact=True).value.call(
+            body_builder.declare("print", exact=True).call(
                 constant("Inside async context")
             )
         )
