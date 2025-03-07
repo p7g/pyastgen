@@ -178,7 +178,7 @@ class Comprehension:
     def for_(self, target: str, iter_: Value, *, is_async: bool = False) -> "Variable":
         var = self._scope.declare(target)
         self._comprehensions.append(
-            ast.comprehension(var.value.expr, iter_.expr, is_async=is_async)
+            ast.comprehension(var.expr, iter_.expr, is_async=is_async)
         )
         return var
 
@@ -207,12 +207,12 @@ class Target(Value):
         builder.assign([self], value)
 
 
-class Variable:
-    __slots__ = "name", "value", "target"
+class Variable(Value):
+    __slots__ = "name", "target"
 
     def __init__(self, name) -> None:
+        super().__init__(ast.Name(name, ctx=ast.Load()))
         self.name = name
-        self.value = Value(ast.Name(name, ctx=ast.Load()))
         self.target = Target(ast.Name(name, ctx=ast.Store()))
 
     def store(self, builder: "Builder", value: Value) -> None:

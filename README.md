@@ -11,11 +11,11 @@ module, builder = pyastgen.new_module()
 
 fib = builder.declare("fib")
 (n,), fib_builder = builder.new_function(fib, pyastgen.Parameters("n"))
-then, _else = fib_builder.if_(n.value.lt(pyastgen.constant(2)))
-then.return_(n.value)
+then, _else = fib_builder.if_(n.lt(pyastgen.constant(2)))
+then.return_(n)
 fib_builder.return_(
-    fib.value.call(n.value.sub(pyastgen.constant(1))).add(
-        fib.value.call(n.value.sub(pyastgen.constant(2)))
+    fib.call(n.sub(pyastgen.constant(1))).add(
+        fib.call(n.sub(pyastgen.constant(2)))
     )
 )
 
