@@ -1,0 +1,19 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pyastgen"
+version = "0.1.0"
+description = "Python library for generating Python"
+authors = [{ name = "Patrick Gingras", email = "775.pg.12@gmail.com" }]
+readme = "README.md"
+license = "Unlicense"
+requires-python = ">=3.13"
+dependencies = []
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "pyastgen/**/*.py",
+    "pyastgen/py.typed",
+]
