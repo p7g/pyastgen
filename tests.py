@@ -294,7 +294,14 @@ class TestBuilderStatements(unittest.TestCase):
     def test_function_definitions(self):
         builder = Builder([])
         var = builder.declare("my_function")
-        params = Parameters(args=["x", "y", "z"], vararg="args", defaults=[constant(4), constant(5)], kwonlyargs=["q"], kw_defaults={"q": constant(1)}, kwarg="kwargs")
+        params = Parameters(
+            args=["x", "y", "z"],
+            vararg="args",
+            defaults=[constant(4), constant(5)],
+            kwonlyargs=["q"],
+            kw_defaults={"q": constant(1)},
+            kwarg="kwargs",
+        )
         (x, y, z, args, q, kwargs), func_builder = builder.new_function(var, params)
         result_var = func_builder.declare("result")
         result_var.store(func_builder, x.value.add(y.value).add(z.value).add(q.value))
@@ -398,7 +405,9 @@ class TestBuilderStatements(unittest.TestCase):
         builder.expr(list_comp)
         self.assertEqual(len(builder.block), 1)
         comp_node = builder.block[0]
-        self.assertEqual(unparse(comp_node), "[x for x in [1, 2, 3] if x > 1 if x % 2 == 0]")
+        self.assertEqual(
+            unparse(comp_node), "[x for x in [1, 2, 3] if x > 1 if x % 2 == 0]"
+        )
 
     def test_comprehension_types(self):
         module, builder = new_module()
@@ -413,7 +422,7 @@ class TestBuilderStatements(unittest.TestCase):
             "[x for x in [1, 2, 3]]\n"
             "(x for x in [1, 2, 3])\n"
             "{x for x in [1, 2, 3]}\n"
-            "{x: x for x in [1, 2, 3]}"
+            "{x: x for x in [1, 2, 3]}",
         )
 
     def test_async_comprehensions(self):

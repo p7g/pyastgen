@@ -17,7 +17,9 @@ class _UnaryOp(Protocol):
 
 
 class _AugAssign(Protocol):
-    def __get__(self, obj: "Builder", cls=None) -> Callable[["Target", "Value"], None]: ...
+    def __get__(
+        self, obj: "Builder", cls=None
+    ) -> Callable[["Target", "Value"], None]: ...
 
 
 class Slice:
@@ -457,12 +459,22 @@ class Builder:
         self.expr(await_(value))
 
     @overload
-    def with1(self, contextmanager: Value, *, is_async: bool = ...) -> tuple[None, "Builder"]: ...
+    def with1(
+        self, contextmanager: Value, *, is_async: bool = ...
+    ) -> tuple[None, "Builder"]: ...
 
     @overload
-    def with1(self, contextmanager: Value, binding: str, *, is_async: bool = ...) -> tuple[Variable, "Builder"]: ...
+    def with1(
+        self, contextmanager: Value, binding: str, *, is_async: bool = ...
+    ) -> tuple[Variable, "Builder"]: ...
 
-    def with1(self, contextmanager: Value, binding: str | None = None, *, is_async: bool = False) -> tuple[Variable | None, "Builder"]:
+    def with1(
+        self,
+        contextmanager: Value,
+        binding: str | None = None,
+        *,
+        is_async: bool = False,
+    ) -> tuple[Variable | None, "Builder"]:
         (var,), builder = self.with_((contextmanager, binding), is_async=is_async)
         return var, builder
 
