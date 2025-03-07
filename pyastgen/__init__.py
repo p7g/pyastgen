@@ -111,7 +111,7 @@ class Value:
 
     def subscript(self, key: "Value | Slice") -> "Target":
         if isinstance(key, Slice):
-            key_expr = ast.Slice(
+            key_expr: ast.expr | ast.Slice = ast.Slice(
                 key.lower.expr if key.lower else None,
                 key.upper.expr if key.upper else None,
                 key.step.expr if key.step else None,
@@ -173,7 +173,7 @@ class Comprehension:
     __slots__ = ("_comprehensions", "_scope")
 
     def __init__(self, parent_scope: "Scope") -> None:
-        self._comprehensions = []
+        self._comprehensions: list[ast.comprehension] = []
         self._scope = parent_scope.new_child()
 
     # FIXME: Support more complex targets
@@ -255,8 +255,10 @@ class Parameters:
         for name in self.kwonlyargs:
             val = self.kw_defaults.get(name)
             if val is not None:
-                val = val.expr
-            kw_defaults.append(val)
+                expr = val.expr
+            else:
+                expr = None
+            kw_defaults.append(expr)
 
         return ast.arguments(
             posonlyargs=[ast.arg(name) for name in self.posonlyargs],
@@ -480,7 +482,7 @@ class Builder:
 
     def with_(
         self, *items: tuple[Value, str | None], is_async: bool = False
-    ) -> tuple[list[Variable], "Builder"]:
+    ) -> tuple[list[Variable | None], "Builder"]:
         withitems = []
         vars = []
         for value, name in items:
