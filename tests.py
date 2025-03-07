@@ -713,9 +713,7 @@ class TestWithBlockCodeGeneration(unittest.TestCase):
 
         # Inside the with block: use 'ctx'
         body_builder.expr(
-            body_builder.declare("print", exact=True).call(
-                var.add(constant(" inside"))
-            )
+            body_builder.declare("print", exact=True).call(var.add(constant(" inside")))
         )
 
         # Generate code
